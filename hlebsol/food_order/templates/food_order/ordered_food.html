@@ -1,0 +1,38 @@
+{% load static %}
+{% load bootstrap3 %}
+{% bootstrap_css %}
+<!--{% bootstrap_javascript %}-->
+
+<link rel="stylesheet" type="text/css" href="{% static 'food_order/style.css' %}"/>
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Food Orders</title>
+</head>
+<body>
+<div class="user_order">
+<h3>Hello, {{ user }}!</h3>
+{% for user_name, items_agg in orders %}
+    <h1>{{user_name}}</h1>
+    {% for day, items in items_agg %}
+        <h3>{{day}}</h3>
+        <table class="table table-condensed table-bordered">
+            <tr class="headers">
+                <td><b>Название</b></td>
+                <td><b>Количество</b></td>
+                <td><b>Цена</b></td>
+            </tr>
+            {% for order in items %}
+                <tr class="menu_positions">
+                    <td>{{order.menu_item.name}}</td>
+                    <td>{{order.quantity}}</td>
+                    <td>{{order.menu_item.price}}</td>
+                </tr>
+            {% endfor %}
+    </table>
+    {% endfor %}
+{% endfor %}
+</div>
+</body>
+</html>

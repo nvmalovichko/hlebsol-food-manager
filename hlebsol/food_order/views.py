@@ -35,6 +35,7 @@ class OrderView(TemplateView):
                 for sheet in wb.sheets():
                     continue_flag = True
                     category = 'Неизвестно'
+                    category_counter = 1
                     for irow in range(sheet.nrows):
                         # search for start
                         row = sheet.row(irow)
@@ -48,7 +49,9 @@ class OrderView(TemplateView):
                             continue
 
                         if row[0].ctype == 1:  # Category getter
-                            category, created = Category.objects.get_or_create(name=row[0].value)
+                            category_name = '{}. {}'.format(category_counter, row[0].value)
+                            category, created = Category.objects.get_or_create(name=category_name)
+                            category_counter += 1
                         else:  # menu item getter
                             menu_date = datetime.datetime.strptime(sheet.name.split()[0], '%d.%m.%y')
                             try:
@@ -80,8 +83,8 @@ class OrderView(TemplateView):
                     .values('menu_item__nrow', 'menu_item__menu_day')
                     .annotate(total_quantity=Sum('quantity'))
             )
-            food_offers_list = ((agg['menu_item__nrow'], agg['menu_item__menu_day'], agg['total_quantity'])
-                                for agg in food_offers_list)
+            food_offers_list = [(agg['menu_item__nrow'], agg['menu_item__menu_day'], agg['total_quantity'])
+                                for agg in food_offers_list]
 
             filepath = os.path.join(hlebsol.settings.MEDIA_ROOT, menu_file.upload.url)
             rb = xlrd.open_workbook(filepath)
@@ -105,6 +108,8 @@ class MenuView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         day_date = datetime.datetime.strptime(request.POST['day_date'], '%d.%m.%y')
+
+        # Check if user already made an order for this day
         if FoodOffer.order_exists(user=request.user, day_date=day_date):
             return self.get(request, *args, **kwargs)
 
@@ -137,3 +142,18 @@ class MenuView(TemplateView):
         if FoodOffer.order_exists(user=user, day_date=day_date):
             context['is_already_ordered'] = True
         return context
+
+class OrderedFoodView(TemplateView):
+    template_name = 'food_order/ordered_food.html'
+
+    def get(self, request, *args, **kwargs):
+        kwargs['user'] = request.user
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = dict(
+            user=kwargs['user'],
+            orders=FoodOffer.collect_recent_orders(kwargs['user']),
+        )
+        return context
+

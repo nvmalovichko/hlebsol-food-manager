@@ -37,8 +37,9 @@ class MenuItem(models.Model):
     @classmethod
     def collect_menu(cls, menu_file_id, menu_date):
         menu_items = cls.objects.filter(menu_date=menu_date, from_file_id=menu_file_id).select_related('category')
-        return {category: list(positions) for category, positions in
-                itertools.groupby(menu_items, lambda x: x.category.name)}
+        grouped_by_categories = [(category, sorted(positions, key=lambda x: x.position)) for category, positions in
+                                 itertools.groupby(menu_items, lambda x: x.category.name)]
+        return sorted(grouped_by_categories, key=lambda x: x[0])
 
 
 class FoodOffer(models.Model):
@@ -52,3 +53,18 @@ class FoodOffer(models.Model):
     @classmethod
     def order_exists(cls, user, day_date):
         return cls.objects.filter(user=user, menu_item__menu_date=day_date).exists()
+
+    @classmethod
+    def collect_recent_orders(cls, user):
+        def grouping_orders(orders):
+            return [(day, sorted(items, key=lambda x: x.menu_item.position)) for day, items in
+                    itertools.groupby(orders, lambda x: x.menu_item.menu_day)]
+
+        recent_orders = (
+            cls.objects
+                .filter(menu_item__from_file=MenuFile.get_latest(), user=user)
+                .select_related('menu_item')
+        )
+        grouped_by_user = [(user_name, grouping_orders(food_orders)) for user_name, food_orders in
+                           itertools.groupby(recent_orders, lambda x: x.user.get_full_name())]
+        return sorted(grouped_by_user, key=lambda x: x[0])
