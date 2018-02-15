@@ -73,7 +73,7 @@ class OrderView(TemplateView):
                                                         category=category,
                                                         from_file=menu_file)
         elif request.POST['file_action'] == 'export':
-            menu_file = MenuFile.objects.latest('created_dt')
+            menu_file = MenuFile.get_latest()
             food_offers_list = (
                 FoodOffer.objects
                     .filter(menu_item__from_file=menu_file)
@@ -118,7 +118,7 @@ class MenuView(TemplateView):
         return self.get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        file_id = MenuFile.get_last_menu_file_id()
+        file_id = MenuFile.get_latest().id
         recent_week_days = MenuItem.get_last_menu_days(file_id)
         user = kwargs.get('user')
 
