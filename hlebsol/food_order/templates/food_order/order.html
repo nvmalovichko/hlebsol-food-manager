@@ -1,0 +1,52 @@
+{% load static %}
+{% load bootstrap3 %}
+{% bootstrap_css %}
+<!--{% bootstrap_javascript %}-->
+
+<link rel="stylesheet" type="text/css" href="{% static 'food_order/style.css' %}"/>
+
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Food offer upload</title>
+    </head>
+    <body>
+    <!-- List of uploaded documents -->
+    {% if menus %}
+        <ul>
+        {% for menu in menus %}
+            <li><a href="{{ menu.upload.url }}">{{ menu.upload.name }}</a></li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No documents.</p>
+    {% endif %}
+        <!-- Import menu. Upload form. Note enctype attribute! -->
+        <form action="{% url 'order' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="file_action" value='import'>
+            <p>{{ form.menu_file_errors }}</p>
+            <p>{{ form.menu_file.label_tag }} {{ form.menu_file.help_text }}</p>
+            <p>
+                {{ form.menu_file.errors }}
+                {{ form.menu_file }}
+            </p>
+            {% buttons %}
+            <button type="submit" class="btn btn-primary">
+                {% bootstrap_icon "upload" %} Импортировать новое меню
+            </button>
+           {% endbuttons %}
+        </form>
+        <!-- Export menu -->
+        <form action="{% url 'order' %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="file_action" value='export'>
+            {% buttons %}
+            <button type="submit" class="btn btn-primary">
+                {% bootstrap_icon "download" %} Экспортировать меню
+            </button>
+           {% endbuttons %}
+        </form>
+
+    </body>
+</html>

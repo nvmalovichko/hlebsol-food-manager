@@ -1,0 +1,80 @@
+{% load static %}
+{% load bootstrap3 %}
+{% bootstrap_css %}
+<!--{% bootstrap_javascript %}-->
+
+<link rel="stylesheet" type="text/css" href="{% static 'food_order/style.css' %}"/>
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Week Menus</title>
+</head>
+<body>
+<h3>Hello, {{ user }}!</h3>
+<br>
+<h2>{{day_name}}</h2>
+
+<div class="pagination">
+        <span class="step-links">
+            {% if day_page.has_previous %}
+                <a href="?day_page=1">&laquo; Первая</a>
+                <a href="?day_page={{ day_page.previous_page_number }}">Предыдущая</a>
+            {% endif %}
+
+            <span class="current">
+                {{ day_page.number }} / {{ day_page.paginator.num_pages }}
+            </span>
+
+            {% if day_page.has_next %}
+                <a href="?day_page={{ day_page.next_page_number }}">Следующая</a>
+                <a href="?day_page={{ day_page.paginator.num_pages }}">Последняя &raquo;</a>
+            {% endif %}
+        </span>
+</div>
+
+{% if is_already_ordered %}
+<h2>Заказ уже сделан</h2>
+{% else %}
+<form method="post" action="{% url 'week_menu' %}">
+    {% csrf_token %}
+
+    <input type="hidden" name="page_number" value={{day_page.number}}>
+    <input type="hidden" name="day_date" value={{day_date}}>
+
+    <table class="table table-condensed table-bordered">
+        <tr class="headers">
+            <td><b>Позиция</b></td>
+            <td><b>Название</b></td>
+            <td><b>Масса</b></td>
+            <td><b>Цена</b></td>
+            <td><b>Количество</b></td>
+        </tr>
+        {% for category, products in menu.items %}
+        <tr class="category">
+            <td>-</td>
+            <td><b>{{category}}</b></td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+        </tr>
+        {% for product in products %}
+        <tr class="menu_positions">
+            <td>{{product.position}}</td>
+            <td>{{product.name}}</td>
+            <td>{{product.mass}}</td>
+            <td>{{product.price}}</td>
+            <td><input type="hidden" name="product_id" value={{product.id}}><input type="number" name="quantity"></td>
+        </tr>
+        {% endfor %}
+        {% endfor %}
+    </table>
+    {% buttons %}
+    <button type="submit" class="btn btn-primary">
+        {% bootstrap_icon "fire " %} Сделать заказ
+    </button>
+    {% endbuttons %}
+</form>
+{%endif%}
+</body>
+</html>

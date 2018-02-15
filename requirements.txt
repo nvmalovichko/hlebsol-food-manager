@@ -1,0 +1,9 @@
+gunicorn==19.7.1
+django==2.0.2
+psycopg2==2.7.1
+dj-database-url==0.4.2
+django-bootstrap3==8.2.2
+whitenoise==3.3.0
+xlrd
+xlwt
+xlutils==2.0.0
