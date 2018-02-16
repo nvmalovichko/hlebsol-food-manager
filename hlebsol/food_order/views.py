@@ -1,21 +1,30 @@
 import datetime
 import os
 
-from xlutils.copy import copy as xlutils_copy
 import hlebsol.settings
 import xlrd
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Sum
 from django.http import HttpResponseRedirect
 from django.views.generic.base import TemplateView
+from xlutils.copy import copy as xlutils_copy
 
 from .forms import MenuFileForm
 from .models import MenuItem, Category, MenuFile, FoodOffer
 
 
-class OrderView(TemplateView):
-    template_name = 'food_order/order.html'
+class MenuView(LoginRequiredMixin, TemplateView):
+    login_url = '/login/'
+    redirect_field_name = ''
+    template_name = 'food_order/menu.html'
+
+
+class OrderView(LoginRequiredMixin, TemplateView):
+    login_url = '/login/'
+    redirect_field_name = ''
+    template_name = 'food_order/file_manager.html'
 
     def get_context_data(self, **kwargs):
         return dict(form=MenuFileForm, menus=MenuFile.objects.all())
@@ -98,8 +107,10 @@ class OrderView(TemplateView):
         return HttpResponseRedirect(request.path)
 
 
-class MenuView(TemplateView):
-    template_name = 'food_order/menu.html'
+class MakeOrderView(LoginRequiredMixin, TemplateView):
+    login_url = '/login/'
+    redirect_field_name = ''
+    template_name = 'food_order/order.html'
 
     def get(self, request, *args, **kwargs):
         kwargs['user'] = request.user
@@ -135,7 +146,6 @@ class MenuView(TemplateView):
         context = dict(
             day_page=day_page,
             menu=MenuItem.collect_menu(file_id, day_date),
-            user=user,
             day_date=day_date.strftime('%d.%m.%y'),
             day_name=day_name,
         )
@@ -143,7 +153,10 @@ class MenuView(TemplateView):
             context['is_already_ordered'] = True
         return context
 
-class OrderedFoodView(TemplateView):
+
+class OrderedFoodView(LoginRequiredMixin, TemplateView):
+    login_url = '/login/'
+    redirect_field_name = ''
     template_name = 'food_order/ordered_food.html'
 
     def get(self, request, *args, **kwargs):
@@ -152,8 +165,6 @@ class OrderedFoodView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = dict(
-            user=kwargs['user'],
             orders=FoodOffer.collect_recent_orders(kwargs['user']),
         )
         return context
-

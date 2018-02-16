@@ -11,8 +11,12 @@
     <title>Food Orders</title>
 </head>
 <body>
+
+<a href="{% url 'login' %}">LOGOUT</a><br>
+<a href="{% url 'menu' %}">Обратно в меню</a><br>
+
 <div class="user_order">
-<h3>Hello, {{ user }}!</h3>
+<h3>Hello, {{ request.user }}!</h3>
 {% for user_name, items_agg in orders %}
     <h1>{{user_name}}</h1>
     {% for day, items in items_agg %}

@@ -27,7 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-LOGIN_REDIRECT_URL = 'week_menu'
+LOGIN_REDIRECT_URL = 'menu'
 
 # Application definition
 
