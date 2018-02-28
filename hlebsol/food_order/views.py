@@ -1,7 +1,6 @@
 import datetime
 import os
 
-import hlebsol.settings
 import xlrd
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
@@ -11,6 +10,7 @@ from django.http import HttpResponseRedirect
 from django.views.generic.base import TemplateView
 from xlutils.copy import copy as xlutils_copy
 
+import hlebsol.settings
 from .forms import MenuFileForm
 from .models import MenuItem, Category, MenuFile, FoodOffer
 
@@ -63,27 +63,17 @@ class OrderView(LoginRequiredMixin, TemplateView):
                             category_counter += 1
                         else:  # menu item getter
                             menu_date = datetime.datetime.strptime(sheet.name.split()[0], '%d.%m.%y')
-                            try:
-                                menu_item = MenuItem.objects.get(nrow=irow,
-                                                                 position=row[0].value,
-                                                                 name=row[1].value,
-                                                                 mass=row[2].value,
-                                                                 price=row[3].value,
-                                                                 menu_day=sheet.name,
-                                                                 menu_date=menu_date,
-                                                                 category=category)
-                                menu_item.from_file = menu_file
-                                menu_item.save()
-                            except MenuItem.DoesNotExist:
-                                MenuItem.objects.create(nrow=irow,
-                                                        position=row[0].value,
-                                                        name=row[1].value,
-                                                        mass=row[2].value,
-                                                        price=row[3].value,
-                                                        menu_day=sheet.name,
-                                                        menu_date=menu_date,
-                                                        category=category,
-                                                        from_file=menu_file)
+                            MenuItem.objects.update_or_create(
+                                nrow=irow,
+                                position=row[0].value,
+                                name=row[1].value,
+                                mass=row[2].value,
+                                price=row[3].value,
+                                menu_day=sheet.name,
+                                menu_date=menu_date,
+                                category=category,
+                                defaults={'from_file': menu_file}
+                            )
         elif request.POST['file_action'] == 'export':
             menu_file = MenuFile.get_latest()
             food_offers_list = (

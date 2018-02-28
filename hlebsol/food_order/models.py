@@ -31,7 +31,7 @@ class MenuItem(models.Model):
 
     @classmethod
     def get_last_menu_days(cls, menu_file_id):
-        return sorted({d for d in MenuItem.objects.filter(from_file_id=menu_file_id)
+        return sorted({d for d in cls.objects.filter(from_file_id=menu_file_id)
                       .values_list('menu_day', 'menu_date')}, key=lambda x: x[1])
 
     @classmethod
