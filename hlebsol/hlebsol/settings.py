@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
 import os
+import dj_database_url
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -76,12 +77,12 @@ WSGI_APPLICATION = 'hlebsol.wsgi.application'
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'USER': 'postgres',
-        'NAME': 'foodorder',
-    }
+    'default': dict(),
 }
+
+DATABASE_URL = 'postgres://ikgkoggckcofrg:6feeecf40da35efa7e0bbfd4c38c7a199da0a031ee424e529d07cf3f0f9df8b3@ec2-54-243-239-66.compute-1.amazonaws.com:5432/df3plin4m8hh7f'
+db_from_env = dj_database_url.config(conn_max_age=500)
+DATABASES['default'].update(db_from_env)
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
@@ -121,3 +122,8 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(PROJECT_ROOT, "staticfiles")
 
 MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'media')
+
+try:
+    from . import local
+except:
+    pass
