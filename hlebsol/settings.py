@@ -26,7 +26,7 @@ SECRET_KEY = 'onzvrp&+_08k!j*r%0ykcvakoie3@@ygellzod-mv_8z5ydd3e'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['sleepy-sea-38666.herokuapp.com', '127.0.0.1']
+ALLOWED_HOSTS = ['sleepy-sea-38666.herokuapp.com', '127.0.0.1', 'localhost']
 
 LOGIN_REDIRECT_URL = 'menu'
 
@@ -124,6 +124,6 @@ STATIC_ROOT = os.path.join(PROJECT_ROOT, "staticfiles")
 MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'media')
 
 try:
-    from . import local
+    from .local import *
 except:
     pass
