@@ -60,11 +60,15 @@ class FoodOffer(models.Model):
             return [(day, sorted(items, key=lambda x: x.menu_item.position)) for day, items in
                     itertools.groupby(orders, lambda x: x.menu_item.menu_day)]
 
+        def calculate_price(orders):
+            return sum(o.menu_item.price for o in orders)
+
         recent_orders = cls.objects.filter(menu_item__from_file=MenuFile.get_latest())
         if not all_users:
             recent_orders = recent_orders.filter(user=user)
         recent_orders = recent_orders.select_related('menu_item')
-        grouped_by_user = [(user_name, grouping_orders(food_orders)) for user_name, food_orders in
+        grouped_by_user = [(user_name, calculate_price(food_orders), grouping_orders(food_orders))
+                           for user_name, food_orders in
                            itertools.groupby(recent_orders, lambda x: x.user.get_full_name())]
         return sorted(grouped_by_user, key=lambda x: x[0])
 
