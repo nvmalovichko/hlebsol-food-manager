@@ -6,7 +6,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Sum
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django.views.generic.base import TemplateView
 from xlutils.copy import copy as xlutils_copy
@@ -103,14 +103,19 @@ class OrderView(LoginRequiredMixin, TemplateView):
                                 for agg in food_offers_list]
 
             filepath = os.path.join(hlebsol.settings.MEDIA_ROOT, menu_file.upload.url)
-            rb = xlrd.open_workbook(filepath)
+            rb = xlrd.open_workbook(filepath, formatting_info=True)
             wb = xlutils_copy(rb)
 
             for nrow, sheet_name, total_quantity in food_offers_list:
                 s = wb.get_sheet(sheet_name)
                 s.write(nrow, 4, total_quantity)
-            wb.save('test.xls')
 
+            response = HttpResponse(
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            response['Content-Disposition'] = 'attachment; filename=mercaux_menu.xls'
+            wb.save(response)
+            return response
         return HttpResponseRedirect(request.path)
 
 
