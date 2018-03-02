@@ -13,6 +13,8 @@
 <body>
 
 <a href="{% url 'login' %}">LOGOUT</a><br>
+<a href="?all_users=true">Вся заказанная еда</a><br>
+<a href="{% url 'ordered_food' %}">Мой заказ</a><br>
 <a href="{% url 'menu' %}">Обратно в меню</a><br>
 
 <div class="user_order">

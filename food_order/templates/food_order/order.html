@@ -22,8 +22,8 @@
 <div class="pagination">
         <span class="step-links">
             {% if day_page.has_previous %}
-                <a href="?day_page=1">&laquo; Первая</a>
-                <a href="?day_page={{ day_page.previous_page_number }}">Предыдущая</a>
+                <a href="?day_page=1"> Первая </a>
+                <a href="?day_page={{ day_page.previous_page_number }}"> Предыдущая </a>
             {% endif %}
 
             <span class="current">
@@ -31,14 +31,14 @@
             </span>
 
             {% if day_page.has_next %}
-                <a href="?day_page={{ day_page.next_page_number }}">Следующая</a>
-                <a href="?day_page={{ day_page.paginator.num_pages }}">Последняя &raquo;</a>
+                <a href="?day_page={{ day_page.next_page_number }}"> Следующая </a>
+                <a href="?day_page={{ day_page.paginator.num_pages }}"> Последняя </a>
             {% endif %}
         </span>
 </div>
 
-{% if is_already_ordered %}
-<h2>Заказ уже сделан</h2>
+{% if block_order_status %}
+<h2>Заказ еды отключен (или Вы уже сделали заказ на этот день)</h2>
 {% else %}
 <form method="post" action="{% url 'order_food' %}">
     {% csrf_token %}

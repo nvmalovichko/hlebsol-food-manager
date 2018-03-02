@@ -7,12 +7,24 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Sum
 from django.http import HttpResponseRedirect
+from django.urls import reverse
 from django.views.generic.base import TemplateView
 from xlutils.copy import copy as xlutils_copy
 
 import hlebsol.settings
 from .forms import MenuFileForm
-from .models import MenuItem, Category, MenuFile, FoodOffer
+from .models import MenuItem, Category, MenuFile, FoodOffer, LiveSetting
+
+
+def toggle_block_order(request):
+    if request.method == 'POST':
+        block_order = LiveSetting.get_setting(name='block_order')
+        if block_order.value == 'true':
+            block_order.value = 'false'
+        else:
+            block_order.value = 'true'
+        block_order.save()
+    return HttpResponseRedirect(reverse('file_manager'))
 
 
 class MenuView(LoginRequiredMixin, TemplateView):
@@ -27,11 +39,16 @@ class OrderView(LoginRequiredMixin, TemplateView):
     template_name = 'food_order/file_manager.html'
 
     def get_context_data(self, **kwargs):
-        return dict(form=MenuFileForm, menus=MenuFile.objects.all())
+        context = dict(
+            form=MenuFileForm,
+            menus=MenuFile.objects.all(),
+        )
+        if LiveSetting.get_setting('block_order').value == 'true':
+            context['block_order_status'] = True
+        return context
 
     @transaction.atomic
     def post(self, request):
-
         if request.POST['file_action'] == 'import':
             form = MenuFileForm(request.POST, request.FILES)
             if form.is_valid():
@@ -139,8 +156,10 @@ class MakeOrderView(LoginRequiredMixin, TemplateView):
             day_date=day_date.strftime('%d.%m.%y'),
             day_name=day_name,
         )
-        if FoodOffer.order_exists(user=user, day_date=day_date):
-            context['is_already_ordered'] = True
+        already_ordered = FoodOffer.order_exists(user=user, day_date=day_date)
+        order_blocked = LiveSetting.get_setting('block_order').value == 'false'
+        if already_ordered or order_blocked:
+            context['block_order_status'] = True
         return context
 
 
@@ -150,11 +169,12 @@ class OrderedFoodView(LoginRequiredMixin, TemplateView):
     template_name = 'food_order/ordered_food.html'
 
     def get(self, request, *args, **kwargs):
+        kwargs['all_users'] = request.GET.get('all_users')
         kwargs['user'] = request.user
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = dict(
-            orders=FoodOffer.collect_recent_orders(kwargs['user']),
+            orders=FoodOffer.collect_recent_orders(kwargs['user'], kwargs['all_users']),
         )
         return context

@@ -55,16 +55,24 @@ class FoodOffer(models.Model):
         return cls.objects.filter(user=user, menu_item__menu_date=day_date).exists()
 
     @classmethod
-    def collect_recent_orders(cls, user):
+    def collect_recent_orders(cls, user, all_users):
         def grouping_orders(orders):
             return [(day, sorted(items, key=lambda x: x.menu_item.position)) for day, items in
                     itertools.groupby(orders, lambda x: x.menu_item.menu_day)]
 
-        recent_orders = (
-            cls.objects
-                .filter(menu_item__from_file=MenuFile.get_latest(), user=user)
-                .select_related('menu_item')
-        )
+        recent_orders = cls.objects.filter(menu_item__from_file=MenuFile.get_latest())
+        if not all_users:
+            recent_orders = recent_orders.filter(user=user)
+        recent_orders = recent_orders.select_related('menu_item')
         grouped_by_user = [(user_name, grouping_orders(food_orders)) for user_name, food_orders in
                            itertools.groupby(recent_orders, lambda x: x.user.get_full_name())]
         return sorted(grouped_by_user, key=lambda x: x[0])
+
+
+class LiveSetting(models.Model):
+    name = models.CharField(max_length=255, null=False, unique=True)
+    value = models.CharField(max_length=255, null=True)
+
+    @classmethod
+    def get_setting(cls, name):
+        return cls.objects.get(name=name)

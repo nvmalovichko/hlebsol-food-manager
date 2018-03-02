@@ -51,6 +51,15 @@
             </button>
            {% endbuttons %}
         </form>
+        <!-- Block all orders -->
+        <form action="{% url 'block_order' %}" method="post">
+            {% csrf_token %}
+            {% buttons %}
+            <button type="submit" class="btn btn-primary">
+                {% if block_order_status %}{% bootstrap_icon "stop" %}Заблокировать заказ еды{% else %}{% bootstrap_icon "play" %}Разрешить заказ еды{% endif %}
+            </button>
+           {% endbuttons %}
+        </form>
 
     </body>
 </html>
