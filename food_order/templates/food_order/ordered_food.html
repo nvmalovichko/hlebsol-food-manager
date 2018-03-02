@@ -20,7 +20,7 @@
 <div class="user_order">
 <h3>Hello, {{ request.user }}!</h3>
 {% for user_name, items_agg, total_price in orders %}
-    <h1>{{user_name}}</h1><br>
+    <h1>{{user_name}}</h1>
     <h2>Всего: {{total_price}} руб.</h2><br>
     {% for day, items in items_agg %}
         <h3>{{day}}</h3>
