@@ -62,7 +62,7 @@ class FoodOffer(models.Model):
                     itertools.groupby(orders, lambda x: x.menu_item.menu_day)]
 
         def calculate_price(orders):
-            return sum(o.menu_item.price for o in orders)
+            return sum(o.menu_item.price * o.quantity for o in orders)
 
         recent_orders = cls.objects.filter(menu_item__from_file=MenuFile.get_latest())
         if not all_users:
