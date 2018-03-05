@@ -67,10 +67,10 @@ class FoodOffer(models.Model):
         if not all_users:
             recent_orders = recent_orders.filter(user=user)
         recent_orders = recent_orders.select_related('menu_item')
-        grouped_orders_by_user = [(user_name, list(food_orders)) for user_name, food_orders
-                                  in itertools.groupby(recent_orders, lambda x: x.user.username)]
-        grouped_orders_by_user_extended = [(user_name, grouping_orders(food_orders), calculate_price(food_orders))
-                                           for user_name, food_orders in grouped_orders_by_user]
+        grouped_orders_by_user = [(user_obj, list(food_orders)) for user_obj, food_orders
+                                  in itertools.groupby(recent_orders, lambda x: x.user)]
+        grouped_orders_by_user_extended = [(user_obj, grouping_orders(food_orders), calculate_price(food_orders))
+                                           for user_obj, food_orders in grouped_orders_by_user]
         return sorted(grouped_orders_by_user_extended, key=lambda x: x[0])
 
 
