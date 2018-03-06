@@ -1,5 +1,6 @@
 import datetime
 import os
+from collections import defaultdict
 
 import xlrd
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -14,6 +15,13 @@ from xlutils.copy import copy as xlutils_copy
 import hlebsol.settings
 from .forms import MenuFileForm
 from .models import MenuItem, Category, MenuFile, FoodOffer, LiveSetting
+
+XLS_NCOLUMNS_MAP = dict(
+    quantity=4,
+    position_sum_price=5,
+    total_price=5,
+    total_price_string=4,
+)
 
 
 def toggle_block_order(request):
@@ -96,19 +104,38 @@ class OrderView(LoginRequiredMixin, TemplateView):
             food_offers_list = (
                 FoodOffer.objects
                     .filter(menu_item__from_file=menu_file)
-                    .values('menu_item__nrow', 'menu_item__menu_day')
+                    .values('menu_item__nrow', 'menu_item__menu_day', 'menu_item__price')
                     .annotate(total_quantity=Sum('quantity'))
             )
-            food_offers_list = [(agg['menu_item__nrow'], agg['menu_item__menu_day'], agg['total_quantity'])
-                                for agg in food_offers_list]
+            food_offers_list = [
+                (agg['menu_item__menu_day'], agg['menu_item__nrow'], agg['menu_item__price'], agg['total_quantity'])
+                for agg in food_offers_list
+            ]
+
+            food_offers_by_sheet = defaultdict(list)
+            for items in food_offers_list:
+                food_offers_by_sheet[items[0]].append(items[1:])
 
             filepath = os.path.join(hlebsol.settings.MEDIA_ROOT, menu_file.upload.url)
             rb = xlrd.open_workbook(filepath, formatting_info=True)
             wb = xlutils_copy(rb)
 
-            for nrow, sheet_name, total_quantity in food_offers_list:
-                s = wb.get_sheet(sheet_name)
-                s.write(nrow, 4, total_quantity)
+            # update all ordered positions: quantity and price
+            for sheet_name, values in food_offers_by_sheet.items():
+                total_price = 0
+                # get target sheet
+                sheet = wb.get_sheet(sheet_name)
+                # find 'ВСЕГО' row number in sheet
+                total_price_nrow = self._get_total_price_nrow(rb.sheet_by_name(sheet_name))
+                for nrow, price, total_quantity in values:
+                    # write total quantity for specific position by row
+                    sheet.write(nrow, XLS_NCOLUMNS_MAP['quantity'], total_quantity)
+                    # calculate and write sum price for specific position by row
+                    position_sum_price = price * total_quantity
+                    total_price += position_sum_price
+                    sheet.write(nrow, XLS_NCOLUMNS_MAP['position_sum_price'], position_sum_price)
+                # write total price for target sheet
+                sheet.write(total_price_nrow, XLS_NCOLUMNS_MAP['total_price'], total_price)
 
             response = HttpResponse(
                 content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -117,6 +144,15 @@ class OrderView(LoginRequiredMixin, TemplateView):
             wb.save(response)
             return response
         return HttpResponseRedirect(request.path)
+
+    @staticmethod
+    def _get_total_price_nrow(sheet):
+        for irow in range(sheet.nrows):
+            row = sheet.row(irow)
+            row_value = row[XLS_NCOLUMNS_MAP['total_price_string']].value.strip()
+            if row_value == 'ВСЕГО:':
+                return irow
+        raise ValueError("Menu export failure: can't find total price string")
 
 
 class MakeOrderView(LoginRequiredMixin, TemplateView):
