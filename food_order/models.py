@@ -58,8 +58,11 @@ class FoodOffer(models.Model):
     @classmethod
     def collect_recent_orders(cls, user, all_users):
         def grouping_orders(orders):
-            return [(day, sorted(items, key=lambda x: x.menu_item.position)) for day, items in
-                    itertools.groupby(orders, lambda x: x.menu_item.menu_day)]
+            grouped_orders_by_day = defaultdict(list)
+            for order in orders:
+                grouped_orders_by_day[order.menu_item.menu_day].append(order)
+            return [(day, sorted(values, key=lambda x: x.menu_item.position)) for day, values in
+                    grouped_orders_by_day.items()]
 
         def calculate_price(orders):
             return sum(o.menu_item.price * o.quantity for o in orders)
