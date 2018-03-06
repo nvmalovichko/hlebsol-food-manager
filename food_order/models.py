@@ -61,8 +61,12 @@ class FoodOffer(models.Model):
             grouped_orders_by_day = defaultdict(list)
             for order in orders:
                 grouped_orders_by_day[order.menu_item.menu_day].append(order)
-            return [(day, sorted(values, key=lambda x: x.menu_item.position)) for day, values in
-                    grouped_orders_by_day.items()]
+
+            grouped_orders_by_day_order_sort = [
+                (day, sorted(values, key=lambda x: x.menu_item.position)) for day, values in
+                grouped_orders_by_day.items()
+            ]
+            return sorted(grouped_orders_by_day_order_sort, key=lambda x: x[0])
 
         def calculate_price(orders):
             return sum(o.menu_item.price * o.quantity for o in orders)
