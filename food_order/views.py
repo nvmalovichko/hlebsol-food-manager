@@ -1,6 +1,6 @@
 import datetime
+import itertools
 import os
-from collections import defaultdict
 
 import xlrd
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -107,27 +107,24 @@ class OrderView(LoginRequiredMixin, TemplateView):
                     .values('menu_item__nrow', 'menu_item__menu_day', 'menu_item__price')
                     .annotate(total_quantity=Sum('quantity'))
             )
-            food_offers_list = [
+            food_offers_list = (
                 (agg['menu_item__menu_day'], agg['menu_item__nrow'], agg['menu_item__price'], agg['total_quantity'])
                 for agg in food_offers_list
-            ]
-
-            food_offers_by_sheet = defaultdict(list)
-            for items in food_offers_list:
-                food_offers_by_sheet[items[0]].append(items[1:])
+            )
+            food_offers_group_gen = itertools.groupby(sorted(food_offers_list, key=lambda x: x[0]), lambda x: x[0])
 
             filepath = os.path.join(hlebsol.settings.MEDIA_ROOT, menu_file.upload.url)
             rb = xlrd.open_workbook(filepath, formatting_info=True)
             wb = xlutils_copy(rb)
 
             # update all ordered positions: quantity and price
-            for sheet_name, values in food_offers_by_sheet.items():
+            for sheet_name, values in food_offers_group_gen:
                 total_price = 0
                 # get target sheet
                 sheet = wb.get_sheet(sheet_name)
                 # find 'ВСЕГО' row number in sheet
                 total_price_nrow = self._get_total_price_nrow(rb.sheet_by_name(sheet_name))
-                for nrow, price, total_quantity in values:
+                for _, nrow, price, total_quantity in values:
                     # write total quantity for specific position by row
                     sheet.write(nrow, XLS_NCOLUMNS_MAP['quantity'], total_quantity)
                     # calculate and write sum price for specific position by row

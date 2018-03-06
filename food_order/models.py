@@ -1,5 +1,4 @@
 import itertools
-from collections import defaultdict
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -38,8 +37,10 @@ class MenuItem(models.Model):
     @classmethod
     def collect_menu(cls, menu_file_id, menu_date):
         menu_items = cls.objects.filter(menu_date=menu_date, from_file_id=menu_file_id).select_related('category')
+        grouby_categories_gen = itertools.groupby(sorted(menu_items, key=lambda x: x.category.name),
+                                                  lambda x: x.category.name)
         grouped_by_categories = [(category, sorted(positions, key=lambda x: x.position)) for category, positions in
-                                 itertools.groupby(menu_items, lambda x: x.category.name)]
+                                 grouby_categories_gen]
         return sorted(grouped_by_categories, key=lambda x: x[0])
 
 
@@ -58,15 +59,13 @@ class FoodOffer(models.Model):
     @classmethod
     def collect_recent_orders(cls, user, all_users):
         def grouping_orders(orders):
-            grouped_orders_by_day = defaultdict(list)
-            for order in orders:
-                grouped_orders_by_day[order.menu_item.menu_day].append(order)
+            grouped_orders_by_day_gen = itertools.groupby(sorted(orders, key=lambda x: x.menu_item.menu_day),
+                                                          lambda x: x.menu_item.menu_day)
 
-            grouped_orders_by_day_order_sort = [
-                (day, sorted(values, key=lambda x: x.menu_item.position)) for day, values in
-                grouped_orders_by_day.items()
+            grouped_orders_by_day = [
+                (day, sorted(values, key=lambda x: x.menu_item.position)) for day, values in grouped_orders_by_day_gen
             ]
-            return sorted(grouped_orders_by_day_order_sort, key=lambda x: x[0])
+            return sorted(grouped_orders_by_day, key=lambda x: x[0])
 
         def calculate_price(orders):
             return sum(o.menu_item.price * o.quantity for o in orders)
@@ -76,12 +75,12 @@ class FoodOffer(models.Model):
             recent_orders = recent_orders.filter(user=user)
         recent_orders = recent_orders.select_related('menu_item', 'user')
 
-        grouped_orders_by_user = defaultdict(list)
-        for order in recent_orders:
-            grouped_orders_by_user[order.user.get_full_name()].append(order)
+        grouped_orders_by_user_gen = itertools.groupby(sorted(recent_orders, key=lambda x: x.user.get_full_name()),
+                                                       lambda x: x.user.get_full_name())
+        grouped_orders_by_user = [(username, list(food_orders)) for username, food_orders in grouped_orders_by_user_gen]
 
         grouped_orders_by_user_extended = [(username, grouping_orders(food_orders), calculate_price(food_orders))
-                                           for username, food_orders in grouped_orders_by_user.items()]
+                                           for username, food_orders in grouped_orders_by_user]
         return sorted(grouped_orders_by_user_extended, key=lambda x: x[0])
 
 
