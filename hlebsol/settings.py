@@ -21,7 +21,7 @@ PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'onzvrp&+_08k!j*r%0ykcvakoie3@@ygellzod-mv_8z5ydd3e'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -81,7 +81,7 @@ DATABASES = {
     'default': dict(),
 }
 
-DATABASE_URL = 'postgres://ikgkoggckcofrg:6feeecf40da35efa7e0bbfd4c38c7a199da0a031ee424e529d07cf3f0f9df8b3@ec2-54-243-239-66.compute-1.amazonaws.com:5432/df3plin4m8hh7f'
+DATABASE_URL = os.environ.get('DATABASE_URL')
 db_from_env = dj_database_url.config(conn_max_age=500)
 DATABASES['default'].update(db_from_env)
 
