@@ -17,7 +17,7 @@
 
 <h3>Hello, {{ request.user }}!</h3>
 <br>
-<h2>{{day_name}}</h2>
+<h2>{{ day_name }}</h2>
 
 <div class="pagination">
         <span class="step-links">
@@ -38,47 +38,56 @@
 </div>
 
 {% if block_order_status %}
-<h2>Заказ еды отключен (или Вы уже сделали заказ на этот день)</h2>
+    <h2>Заказ еды отключен (или Вы уже сделали заказ на этот день)</h2>
+    <form method="post" action="{% url 'cancel_order' %}">
+        {% csrf_token %}
+        <input type="hidden" name="day_date" value={{ day_date }}>
+        <input type="hidden" name="page_number" value={{ day_page.number }}>
+        {% buttons %}
+            <button type="submit" class="btn btn-primary">
+                {% bootstrap_icon "fire " %} Аннулировать заказ
+            </button>
+        {% endbuttons %}</form>
 {% else %}
-<form method="post" action="{% url 'order_food' %}">
-    {% csrf_token %}
+    <form method="post" action="{% url 'order_food' %}">
+        {% csrf_token %}
 
-    <input type="hidden" name="page_number" value={{day_page.number}}>
-    <input type="hidden" name="day_date" value={{day_date}}>
+        <input type="hidden" name="page_number" value={{ day_page.number }}>
+        <input type="hidden" name="day_date" value={{ day_date }}>
 
-    <table class="table table-condensed table-bordered">
-        <tr class="headers">
-            <td><b>Позиция</b></td>
-            <td><b>Название</b></td>
-            <td><b>Масса</b></td>
-            <td><b>Цена</b></td>
-            <td><b>Количество</b></td>
-        </tr>
-        {% for category, products in menu%}
-        <tr class="category">
-            <td>-</td>
-            <td><b>{{category}}</b></td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-        </tr>
-        {% for product in products %}
-        <tr class="menu_positions">
-            <td>{{product.position}}</td>
-            <td>{{product.name}}</td>
-            <td>{{product.mass}}</td>
-            <td>{{product.price}}</td>
-            <td><input type="hidden" name="product_id" value={{product.id}}><input type="number" name="quantity"></td>
-        </tr>
-        {% endfor %}
-        {% endfor %}
-    </table>
-    {% buttons %}
-    <button type="submit" class="btn btn-primary">
-        {% bootstrap_icon "fire " %} Сделать заказ
-    </button>
-    {% endbuttons %}
-</form>
+        <table class="table table-condensed table-bordered">
+            <tr class="headers">
+                <td><b>Позиция</b></td>
+                <td><b>Название</b></td>
+                <td><b>Масса</b></td>
+                <td><b>Цена</b></td>
+                <td><b>Количество</b></td>
+            </tr>
+            {% for category, products in menu %}
+                <tr class="category">
+                    <td>-</td>
+                    <td><b>{{ category }}</b></td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                {% for product in products %}
+                    <tr class="menu_positions">
+                        <td>{{ product.position }}</td>
+                        <td>{{ product.name }}</td>
+                        <td>{{ product.mass }}</td>
+                        <td>{{ product.price }}</td>
+                        <td><input type="hidden" name="product_id" value={{ product.id }}><input type="number" name="quantity"></td>
+                    </tr>
+                {% endfor %}
+            {% endfor %}
+        </table>
+        {% buttons %}
+            <button type="submit" class="btn btn-primary">
+                {% bootstrap_icon "fire " %} Сделать заказ
+            </button>
+        {% endbuttons %}
+    </form>
 {% endif %}
 </body>
 </html>
