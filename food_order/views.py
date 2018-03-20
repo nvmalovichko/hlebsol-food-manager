@@ -172,7 +172,7 @@ class MakeOrderView(LoginRequiredMixin, TemplateView):
         product_ids = request.POST.getlist('product_id')
         quantities = request.POST.getlist('quantity')
         assert len(product_ids) == len(quantities)
-        food_quantities = [FoodOffer(menu_item_id=product_id, quantity=quantity, user=request.user) for
+        food_quantities = [FoodOffer(menu_item_id=product_id, quantity=quantity, user=request.user) for 
                            product_id, quantity in zip(product_ids, quantities) if quantity not in ('', '0')]
 
         FoodOffer.objects.bulk_create(food_quantities)
@@ -216,3 +216,15 @@ class OrderedFoodView(LoginRequiredMixin, TemplateView):
             orders=FoodOffer.collect_recent_orders(kwargs['user'], kwargs['all_users']),
         )
         return context
+
+
+class AnnulledOrder(LoginRequiredMixin, TemplateView):
+    login_url = '/login/'
+
+    def post(self, request, *args, **kwargs):
+        day_date = datetime.datetime.strptime(request.POST['day_date'], '%d.%m.%y')
+        page_number = request.POST['page_number']
+
+        FoodOffer.objects.filter(user=request.user, menu_item__menu_date=day_date).delete()
+
+        return HttpResponseRedirect(f'{reverse("order_food")}?day_page={page_number}')
