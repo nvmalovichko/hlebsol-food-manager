@@ -172,8 +172,8 @@ class MakeOrderView(LoginRequiredMixin, TemplateView):
         product_ids = request.POST.getlist('product_id')
         quantities = request.POST.getlist('quantity')
         assert len(product_ids) == len(quantities)
-        food_quantities = [FoodOffer(menu_item_id=product_id, quantity=quantity, user=request.user) for
-                           product_id, quantity in zip(product_ids, quantities) if quantity]
+        food_quantities = [FoodOffer(menu_item_id=product_id, quantity=quantity, user=request.user) for 
+                           product_id, quantity in zip(product_ids, quantities) if quantity not in ('', '0')]
 
         FoodOffer.objects.bulk_create(food_quantities)
         return self.get(request, *args, **kwargs)
