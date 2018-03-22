@@ -38,7 +38,9 @@
 </div>
 
 {% if block_order_status %}
-    <h2>Заказ еды отключен (или Вы уже сделали заказ на этот день)</h2>
+    <h2>Заказ еды был отключен</h2>
+{% elif already_ordered %}
+<h2>Вы уже заказали еду на этот день</h2>
     <form method="post" action="{% url 'cancel_order' %}">
         {% csrf_token %}
         <input type="hidden" name="day_date" value={{ day_date }}>
@@ -47,7 +49,8 @@
             <button type="submit" class="btn btn-primary">
                 {% bootstrap_icon "fire " %} Аннулировать заказ
             </button>
-        {% endbuttons %}</form>
+        {% endbuttons %}
+    </form>
 {% else %}
     <form method="post" action="{% url 'order_food' %}">
         {% csrf_token %}

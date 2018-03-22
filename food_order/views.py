@@ -196,8 +196,10 @@ class MakeOrderView(LoginRequiredMixin, TemplateView):
         )
         already_ordered = FoodOffer.order_exists(user=user, day_date=day_date)
         order_blocked = LiveSetting.get_setting('block_order').value == 'false'
-        if already_ordered or order_blocked:
+        if order_blocked:
             context['block_order_status'] = True
+        if already_ordered:
+            context['already_ordered'] = True
         return context
 
 
