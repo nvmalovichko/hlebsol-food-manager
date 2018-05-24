@@ -1,7 +1,7 @@
 import datetime
 import itertools
 import os
-
+import urllib.parse
 import xlrd
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
@@ -102,7 +102,11 @@ class OrderView(LoginRequiredMixin, TemplateView):
         elif request.POST['file_action'] == 'export':
             form = MenuFileForm(request.POST, request.FILES)
             if form.is_valid():
-                filepath = request.FILES['menu_file']
+                filename = request.FILES['menu_file'].name
+                filedata = request.FILES['menu_file'].read()
+                filepath = urllib.parse.urljoin(hlebsol.settings.MEDIA_ROOT, filename)
+                with open(filepath, 'wb') as f:
+                    f.write(filedata)
                 rb = xlrd.open_workbook(filepath, formatting_info=True)
                 wb = xlutils_copy(rb)
 
@@ -175,7 +179,7 @@ class MakeOrderView(LoginRequiredMixin, TemplateView):
         product_ids = request.POST.getlist('product_id')
         quantities = request.POST.getlist('quantity')
         assert len(product_ids) == len(quantities)
-        food_quantities = [FoodOffer(menu_item_id=product_id, quantity=quantity, user=request.user) for 
+        food_quantities = [FoodOffer(menu_item_id=product_id, quantity=quantity, user=request.user) for
                            product_id, quantity in zip(product_ids, quantities) if quantity not in ('', '0')]
 
         FoodOffer.objects.bulk_create(food_quantities)

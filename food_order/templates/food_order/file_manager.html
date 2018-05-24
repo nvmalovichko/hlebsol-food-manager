@@ -42,9 +42,15 @@
            {% endbuttons %}
         </form>
         <!-- Export menu -->
-        <form action="{% url 'file_manager' %}" method="post">
+        <form action="{% url 'file_manager' %}" method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="hidden" name="file_action" value='export'>
+            <p>{{ form.menu_file_errors }}</p>
+            <p>{{ form.menu_file.label_tag }} {{ form.menu_file.help_text }}</p>
+            <p>
+                {{ form.menu_file.errors }}
+                {{ form.menu_file }}
+            </p>
             {% buttons %}
             <button type="submit" class="btn btn-primary">
                 {% bootstrap_icon "download" %} Экспортировать меню
