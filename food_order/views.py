@@ -147,7 +147,7 @@ class OrderView(LoginRequiredMixin, TemplateView):
                 response['Content-Disposition'] = 'attachment; filename=mercaux_menu.xls'
                 wb.save(response)
                 return response
-            return HttpResponseRedirect(request.path)
+        return HttpResponseRedirect(request.path)
 
     @staticmethod
     def _get_total_price_nrow(sheet):
