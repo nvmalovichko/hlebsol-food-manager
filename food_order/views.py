@@ -100,47 +100,50 @@ class OrderView(LoginRequiredMixin, TemplateView):
                                 defaults={'from_file': menu_file}
                             )
         elif request.POST['file_action'] == 'export':
-            menu_file = MenuFile.get_latest()
-            food_offers_list = (
-                FoodOffer.objects
-                    .filter(menu_item__from_file=menu_file)
-                    .values('menu_item__nrow', 'menu_item__menu_day', 'menu_item__price')
-                    .annotate(total_quantity=Sum('quantity'))
-            )
-            food_offers_list = (
-                (agg['menu_item__menu_day'], agg['menu_item__nrow'], agg['menu_item__price'], agg['total_quantity'])
-                for agg in food_offers_list
-            )
-            food_offers_group_gen = itertools.groupby(sorted(food_offers_list, key=lambda x: x[0]), lambda x: x[0])
+            form = MenuFileForm(request.POST, request.FILES)
+            if form.is_valid():
+                filepath = request.FILES['menu_file']
+                rb = xlrd.open_workbook(filepath, formatting_info=True)
+                wb = xlutils_copy(rb)
 
-            filepath = os.path.join(hlebsol.settings.MEDIA_ROOT, menu_file.upload.url)
-            rb = xlrd.open_workbook(filepath, formatting_info=True)
-            wb = xlutils_copy(rb)
+                # prepare data
+                menu_file = MenuFile.get_latest()
+                food_offers_list = (
+                    FoodOffer.objects
+                        .filter(menu_item__from_file=menu_file)
+                        .values('menu_item__nrow', 'menu_item__menu_day', 'menu_item__price')
+                        .annotate(total_quantity=Sum('quantity'))
+                )
+                food_offers_list = (
+                    (agg['menu_item__menu_day'], agg['menu_item__nrow'], agg['menu_item__price'], agg['total_quantity'])
+                    for agg in food_offers_list
+                )
+                food_offers_group_gen = itertools.groupby(sorted(food_offers_list, key=lambda x: x[0]), lambda x: x[0])
 
-            # update all ordered positions: quantity and price
-            for sheet_name, values in food_offers_group_gen:
-                total_price = 0
-                # get target sheet
-                sheet = wb.get_sheet(sheet_name)
-                # find 'ВСЕГО' row number in sheet
-                total_price_nrow = self._get_total_price_nrow(rb.sheet_by_name(sheet_name))
-                for _, nrow, price, total_quantity in values:
-                    # write total quantity for specific position by row
-                    sheet.write(nrow, XLS_NCOLUMNS_MAP['quantity'], total_quantity)
-                    # calculate and write sum price for specific position by row
-                    position_sum_price = price * total_quantity
-                    total_price += position_sum_price
-                    sheet.write(nrow, XLS_NCOLUMNS_MAP['position_sum_price'], position_sum_price)
-                # write total price for target sheet
-                sheet.write(total_price_nrow, XLS_NCOLUMNS_MAP['total_price'], total_price)
+                # update all ordered positions: quantity and price
+                for sheet_name, values in food_offers_group_gen:
+                    total_price = 0
+                    # get target sheet
+                    sheet = wb.get_sheet(sheet_name)
+                    # find 'ВСЕГО' row number in sheet
+                    total_price_nrow = self._get_total_price_nrow(rb.sheet_by_name(sheet_name))
+                    for _, nrow, price, total_quantity in values:
+                        # write total quantity for specific position by row
+                        sheet.write(nrow, XLS_NCOLUMNS_MAP['quantity'], total_quantity)
+                        # calculate and write sum price for specific position by row
+                        position_sum_price = price * total_quantity
+                        total_price += position_sum_price
+                        sheet.write(nrow, XLS_NCOLUMNS_MAP['position_sum_price'], position_sum_price)
+                    # write total price for target sheet
+                    sheet.write(total_price_nrow, XLS_NCOLUMNS_MAP['total_price'], total_price)
 
-            response = HttpResponse(
-                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
-            response['Content-Disposition'] = 'attachment; filename=mercaux_menu.xls'
-            wb.save(response)
-            return response
-        return HttpResponseRedirect(request.path)
+                response = HttpResponse(
+                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                )
+                response['Content-Disposition'] = 'attachment; filename=mercaux_menu.xls'
+                wb.save(response)
+                return response
+            return HttpResponseRedirect(request.path)
 
     @staticmethod
     def _get_total_price_nrow(sheet):
