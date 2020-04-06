@@ -1,5 +1,5 @@
 gunicorn==19.7.1
-django==2.0.8
+django==2.0.10
 psycopg2==2.7.1
 dj-database-url==0.4.2
 django-bootstrap3==8.2.2
